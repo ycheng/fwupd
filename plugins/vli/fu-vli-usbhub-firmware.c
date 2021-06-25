@@ -178,8 +178,9 @@ fu_vli_usbhub_firmware_parse (FuFirmware *firmware,
 			g_prefix_error (error, "failed to get 820/822 byte: ");
 			return FALSE;
 		}
-		/* VL820/VL822 == VT3518 */
+		/* VL819~VL822 == VT3518 */
 		if (tmp == 0xF0) {
+            /* VL819 to be added */
 			self->device_kind = FU_VLI_DEVICE_KIND_VL822;
 		} else {
 			/* Q7/Q8 requires searching two addresses for offset value */
@@ -206,10 +207,6 @@ fu_vli_usbhub_firmware_parse (FuFirmware *firmware,
 	case 0x0553:
 		/* VL120 == VT3553 */
 		self->device_kind = FU_VLI_DEVICE_KIND_VL120;
-		break;
-	case 0x0557:
-		/* VL819 == VT3557 */
-		self->device_kind = FU_VLI_DEVICE_KIND_VL819;
 		break;
 	default:
 		break;
