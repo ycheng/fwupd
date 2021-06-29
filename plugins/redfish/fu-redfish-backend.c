@@ -148,10 +148,17 @@ fu_redfish_backend_coldplug_member (FuRedfishBackend *self,
 	if (json_object_has_member (member, "Name"))
 		fu_device_set_name (dev, json_object_get_string_member (member, "Name"));
 	fu_device_set_summary (dev, "Redfish device");
-	if (json_object_has_member (member, "Version"))
-		fu_device_set_version (dev, json_object_get_string_member (member, "Version"));
-	if (json_object_has_member (member, "LowestSupportedVersion"))
-		fu_device_set_version_lowest (dev, json_object_get_string_member (member, "LowestSupportedVersion"));
+	if (json_object_has_member (member, "Version")) {
+		const gchar *ver = json_object_get_string_member (member, "Version");
+		g_autofree gchar *tmp = fu_redfish_common_fix_version (ver);
+		fu_device_set_version (dev, tmp);
+		fu_device_set_version_format (dev, fu_common_version_guess_format (tmp));
+	}
+	if (json_object_has_member (member, "LowestSupportedVersion")) {
+		const gchar *ver = json_object_get_string_member (member, "LowestSupportedVersion");
+		g_autofree gchar *tmp = fu_redfish_common_fix_version (ver);
+		fu_device_set_version_lowest (dev, tmp);
+	}
 	if (json_object_has_member (member, "Description"))
 		fu_device_set_description (dev, json_object_get_string_member (member, "Description"));
 	if (json_object_has_member (member, "Updateable")) {

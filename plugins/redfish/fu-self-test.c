@@ -29,6 +29,24 @@ fu_test_redfish_common_func (void)
 }
 
 static void
+fu_test_redfish_common_version_func (void)
+{
+	struct {
+		const gchar *in;
+		const gchar *op;
+	} strs[] = {
+		{ "1.2.3",		"1.2.3" },
+		{ "P50 v1.2.3 PROD",	"1.2.3" },
+		{ "P50 1.2.3 DEV",	"1.2.3" },
+		{ NULL, NULL }
+	};
+	for (guint i = 0; strs[i].in != NULL; i++) {
+		g_autofree gchar *tmp = fu_redfish_common_fix_version (strs[i].in);
+		g_assert_cmpstr (tmp, ==, strs[i].op);
+	}
+}
+
+static void
 fu_test_redfish_network_mac_addr_func (void)
 {
 	g_autofree gchar *ip_addr = NULL;
@@ -68,6 +86,7 @@ main (int argc, char **argv)
 	g_test_init (&argc, &argv, NULL);
 	g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
 	g_test_add_func ("/redfish/common", fu_test_redfish_common_func);
+	g_test_add_func ("/redfish/common{version}", fu_test_redfish_common_version_func);
 	g_test_add_func ("/redfish/network{mac_addr}", fu_test_redfish_network_mac_addr_func);
 	g_test_add_func ("/redfish/network{vid_pid}", fu_test_redfish_network_vid_pid_func);
 	return g_test_run ();

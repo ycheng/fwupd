@@ -43,3 +43,5 @@
 gchar		*fu_redfish_common_buffer_to_ipv4	(const guint8	*buffer);
 gchar		*fu_redfish_common_buffer_to_ipv6	(const guint8	*buffer);
 gchar		*fu_redfish_common_buffer_to_mac	(const guint8	*buffer);
+
+gchar		*fu_redfish_common_fix_version		(const gchar	*version);
