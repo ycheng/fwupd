@@ -10,6 +10,8 @@ shared_module('fu_plugin_redfish',
     'fu-plugin-redfish.c',
     'fu-redfish-backend.c',
     'fu-redfish-common.c',     # fuzzing
+    'fu-redfish-device.c',
+    'fu-redfish-request.c',
     'fu-redfish-network.c',
     'fu-redfish-smbios.c',     # fuzzing
   ],
@@ -36,6 +38,13 @@ install_data(['redfish.conf'],
 )
 
 if get_option('tests')
+  testdatadir = join_paths(meson.current_source_dir(), 'tests')
+  testdatadirs = environment()
+  testdatadirs.set('G_TEST_SRCDIR', meson.current_source_dir())
+  testdatadirs.set('G_TEST_BUILDDIR', meson.current_build_dir())
+  testdatadirs.set('FWUPD_LOCALSTATEDIR', '/tmp/fwupd-self-test/var')
+  cargs += '-DTESTDATADIR="' + testdatadir + '"'
+  cargs += '-DPLUGINBUILDDIR="' + meson.current_build_dir() + '"'
   e = executable(
     'redfish-self-test',
     fu_hash,
@@ -43,6 +52,8 @@ if get_option('tests')
       'fu-self-test.c',
       'fu-redfish-backend.c',
       'fu-redfish-common.c',
+      'fu-redfish-device.c',
+      'fu-redfish-request.c',
       'fu-redfish-network.c',
       'fu-redfish-smbios.c',
     ],

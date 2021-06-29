@@ -18,18 +18,6 @@ struct FuPluginData {
 };
 
 gboolean
-fu_plugin_update (FuPlugin *plugin,
-		  FuDevice *device,
-		  GBytes *blob_fw,
-		  FwupdInstallFlags flags,
-		  GError **error)
-{
-	FuPluginData *data = fu_plugin_get_data (plugin);
-
-	return fu_redfish_backend_update (data->backend, device, blob_fw, error);
-}
-
-gboolean
 fu_plugin_coldplug (FuPlugin *plugin, GError **error)
 {
 	FuPluginData *data = fu_plugin_get_data (plugin);
@@ -103,14 +91,22 @@ fu_redfish_plugin_discover_smbios_table (FuPlugin *plugin, GError **error)
 {
 	FuPluginData *data = fu_plugin_get_data (plugin);
 	FuContext *ctx = fu_plugin_get_context (plugin);
+	const gchar *smbios_data_fn;
 	g_autofree gchar *hostname = NULL;
 	g_autoptr(FuRedfishSmbios) redfish_smbios = fu_redfish_smbios_new ();
 	g_autoptr(GBytes) smbios_data = NULL;
 
-	/* is optional */
-	smbios_data = fu_context_get_smbios_data (ctx, REDFISH_SMBIOS_TABLE_TYPE);
-	if (smbios_data == NULL)
-		return TRUE;
+	/* is optional if not in self tests */
+	smbios_data_fn = g_getenv ("FWUPD_REDFISH_SMBIOS_DATA");
+	if (smbios_data_fn != NULL) {
+		smbios_data = fu_common_get_contents_bytes (smbios_data_fn, error);
+		if (smbios_data == NULL)
+			return FALSE;
+	} else {
+		smbios_data = fu_context_get_smbios_data (ctx, REDFISH_SMBIOS_TABLE_TYPE);
+		if (smbios_data == NULL)
+			return TRUE;
+	}
 	if (!fu_firmware_parse (FU_FIRMWARE (redfish_smbios),
 				smbios_data, FWUPD_INSTALL_FLAG_NONE, error)) {
 		g_prefix_error (error, "failed to parse SMBIOS table entry type 42: ");
