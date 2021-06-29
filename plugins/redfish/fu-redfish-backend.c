@@ -145,6 +145,13 @@ fu_redfish_backend_coldplug_member (FuRedfishBackend *self,
 
 	guid_lower = g_ascii_strdown (guid, -1);
 	fu_device_add_guid (dev, guid_lower);
+	if (json_object_has_member (member, "Manufacturer")) {
+		const gchar *vendor = json_object_get_string_member (member, "Manufacturer");
+		g_autofree gchar *vendor_upper = g_ascii_strup (vendor, -1);
+		g_autofree gchar *vendor_id = g_strdup_printf ("REDFISH:%s", vendor_upper);
+		fu_device_set_vendor (dev, vendor);
+		fu_device_add_vendor_id (dev, vendor_id);
+	}
 	if (json_object_has_member (member, "Name"))
 		fu_device_set_name (dev, json_object_get_string_member (member, "Name"));
 	fu_device_set_summary (dev, "Redfish device");
