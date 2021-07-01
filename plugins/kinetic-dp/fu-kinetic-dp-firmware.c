@@ -14,7 +14,7 @@
 struct _FuKineticDpFirmware {
 	FuFirmwareClass	parent_instance;
 
-	// <TODO> Declare as private member
+	/* <TODO> Declare as private member */
 	guint32		esm_payload_size;
 	guint32		arm_app_code_size;
 	guint32		app_init_data_size;
@@ -35,20 +35,18 @@ typedef struct {
 	guint16		fw_bin_flag;
 } KtDpFwAppIdFlag;
 
-// ---------------------------------------------------------------
-// Application signature/Identifier table
-// ---------------------------------------------------------------
+/* Application signature/Identifier table */
 static const KtDpFwAppIdFlag kt_dp_app_sign_id_table[] =
 {
-	// Chip_ID		App ID Offset	App ID			FW Flag
-	{KT_CHIP_JAGUAR_5000,	0x0FFFE4UL,	{'J', 'A', 'G', 'R'},	KT_FW_BIN_FLAG_NONE	},	// Jaguar 1024KB
-	{KT_CHIP_JAGUAR_5000,	0x0A7036UL,	{'J', 'A', 'G', 'R'},	KT_FW_BIN_FLAG_NONE	},	// Jaguar 670KB, for ANZU
-	{KT_CHIP_JAGUAR_5000,	0x0FFFE4UL,	{'J', 'A', 'G', 'X'},	KT_FW_BIN_FLAG_XIP	},	// Jaguar 1024KB (App 640KB)
-	{KT_CHIP_JAGUAR_5000,	0x0E7036UL,	{'J', 'A', 'G', 'X'},	KT_FW_BIN_FLAG_XIP	},	// Jaguar 670KB, for ANZU (App 640KB)
-	{KT_CHIP_MUSTANG_5200,	0x0FFFE4UL,	{'M', 'S', 'T', 'G'},	KT_FW_BIN_FLAG_NONE	},	// Mustang 1024KB
-	{KT_CHIP_MUSTANG_5200,	0x0A7036UL,	{'M', 'S', 'T', 'G'},	KT_FW_BIN_FLAG_NONE	},	// Mustang 670KB, for ANZU
-	{KT_CHIP_MUSTANG_5200,	0x0FFFE4UL,	{'M', 'S', 'T', 'X'},	KT_FW_BIN_FLAG_XIP	},	// Mustang 1024KB (App 640KB)
-	{KT_CHIP_MUSTANG_5200,	0x0E7036UL,	{'M', 'S', 'T', 'X'},	KT_FW_BIN_FLAG_XIP	},	// Mustang 670KB, for ANZU (App 640KB)
+	/* Chip_ID		App ID Offset	App ID			FW Flag									*/
+	{KT_CHIP_JAGUAR_5000,	0x0FFFE4UL,	{'J', 'A', 'G', 'R'},	KT_FW_BIN_FLAG_NONE	},	/* Jaguar 1024KB			*/
+	{KT_CHIP_JAGUAR_5000,	0x0A7036UL,	{'J', 'A', 'G', 'R'},	KT_FW_BIN_FLAG_NONE	},	/* Jaguar 670KB, for ANZU		*/
+	{KT_CHIP_JAGUAR_5000,	0x0FFFE4UL,	{'J', 'A', 'G', 'X'},	KT_FW_BIN_FLAG_XIP	},	/* Jaguar 1024KB (App 640KB)		*/
+	{KT_CHIP_JAGUAR_5000,	0x0E7036UL,	{'J', 'A', 'G', 'X'},	KT_FW_BIN_FLAG_XIP	},	/* Jaguar 670KB, for ANZU (App 640KB)	*/
+	{KT_CHIP_MUSTANG_5200,	0x0FFFE4UL,	{'M', 'S', 'T', 'G'},	KT_FW_BIN_FLAG_NONE	},	/* Mustang 1024KB			*/
+	{KT_CHIP_MUSTANG_5200,	0x0A7036UL,	{'M', 'S', 'T', 'G'},	KT_FW_BIN_FLAG_NONE	},	/* Mustang 670KB, for ANZU		*/
+	{KT_CHIP_MUSTANG_5200,	0x0FFFE4UL,	{'M', 'S', 'T', 'X'},	KT_FW_BIN_FLAG_XIP	},	/* Mustang 1024KB (App 640KB)		*/
+	{KT_CHIP_MUSTANG_5200,	0x0E7036UL,	{'M', 'S', 'T', 'X'},	KT_FW_BIN_FLAG_XIP	},	/* Mustang 670KB, for ANZU (App 640KB)	*/
 };
 
 static guint32
@@ -56,7 +54,7 @@ _get_valid_payload_size (const guint8 *payload_data, const guint32 data_size)
 {
 	guint32 i = 0;
 
-	payload_data += data_size - 1;  // Start searching from the end of payload
+	payload_data += data_size - 1;  /* Start searching from the end of payload */
 	while ((*(payload_data - i) == 0xFF) && (i < data_size)) {
 		i++;
 	}
@@ -78,7 +76,7 @@ kt_dp_get_chip_id_from_fw_buf (const guint8 *fw_bin_buf,
 
 		if ((app_id_offset + APP_ID_STR_LEN) < fw_bin_size) {
 			if (0 == memcmp (&fw_bin_buf[app_id_offset], kt_dp_app_sign_id_table[i].app_id_str, APP_ID_STR_LEN)) {
-				// Found corresponding app ID!
+				/* Found corresponding app ID */
 				*chip_id = kt_dp_app_sign_id_table[i].chip_id;
 				*fw_bin_flag = kt_dp_app_sign_id_table[i].fw_bin_flag;
 
@@ -100,12 +98,15 @@ sec_aux_isp_parse_app_fw (FuKineticDpFirmware *firmware,
 {
 	guint32 app_code_block_size = APP_CODE_NORMAL_BLOCK_SIZE;
 	guint32 app_init_data_start_addr = SPI_APP_NORMAL_INIT_DATA_START;
-	//KtJaguarAppId *fw_app_id;
 
 	firmware->is_fw_esm_xip_enabled = FALSE;
 
 	if (fw_bin_size != STD_FW_PAYLOAD_SIZE) {
-		g_prefix_error (error, "F/W payload size (%u) not correct!", fw_bin_size);
+		g_set_error(error,
+			    FWUPD_ERROR,
+			    FWUPD_ERROR_INTERNAL,
+			    "F/W payload size (%u) is not valid",
+			    fw_bin_size);
 		return FALSE;
 	}
 
@@ -115,22 +116,22 @@ sec_aux_isp_parse_app_fw (FuKineticDpFirmware *firmware,
 		firmware->is_fw_esm_xip_enabled = TRUE;
 	}
 
-#if 0	// <TODO> Get FW info embedded in FW file
+#if 0	/* <TODO> Get FW info embedded in FW file */
 	fw_app_id = (KtJaguarAppId *)(fw_bin_buf + SPI_APP_ID_DATA_START);
 
-	// Get Standard F/W version
+	/* Get Standard F/W version */
 	fw_file_info->fw_info.std_fw_ver = (guint32)(fw_app_id->fw_major_ver_num << 16);
 	fw_file_info->fw_info.std_fw_ver += (guint32)(fw_app_id->fw_minor_ver_num << 8);
 	fw_file_info->fw_info.std_fw_ver += fw_app_id->fw_rev_num;
 
-	// Get Customer Project ID
+	/* Get Customer Project ID */
 	fw_file_info->fw_info.customer_project_id = fw_bin_buf[CUSTOMER_PROJ_ID_OFFSET];
 
-	// Get Customer F/W Version
+	/* Get Customer F/W Version */
 	memcpy (&fw_file_info->fw_info.customer_fw_ver, &fw_bin_buf[CUSTOMER_FW_VER_OFFSET], CUSTOMER_FW_VER_SIZE);
 #endif
 
-	// Get each block size
+	/* Get each block size */
 	firmware->esm_payload_size = _get_valid_payload_size (&fw_bin_buf[SPI_ESM_PAYLOAD_START], ESM_PAYLOAD_BLOCK_SIZE);
 	firmware->arm_app_code_size = _get_valid_payload_size (&fw_bin_buf[SPI_APP_PAYLOAD_START], app_code_block_size);
 	firmware->app_init_data_size = _get_valid_payload_size (&fw_bin_buf[app_init_data_start_addr], APP_INIT_DATA_BLOCK_SIZE);
@@ -190,8 +191,8 @@ fu_kinetic_dp_firmware_parse (FuFirmware *firmware,
 	g_autoptr (GBytes) app_fw_payload = NULL;
 	g_autoptr  (FuFirmware) isp_drv_img = NULL;
 	g_autoptr (FuFirmware) app_fw_img = NULL;
-	KtChipId chip_id = KT_CHIP_NONE;	// <TODO> store in class private data
-	guint16 fw_bin_flag = 0;		// <TODO> store in class private data
+	KtChipId chip_id = KT_CHIP_NONE;	/* <TODO> store in class private data */
+	guint16 fw_bin_flag = 0;		/* <TODO> store in class private data */
 
 	/* Parse firmware according to Kinetic's FW image format
 	 * FW binary = 4 bytes header(Little-Endian) + ISP driver + app FW
@@ -218,7 +219,10 @@ fu_kinetic_dp_firmware_parse (FuFirmware *firmware,
 	app_fw_payload = g_bytes_new_from_bytes (fw, HEADER_LEN_ISP_DRV_SIZE + isp_drv_payload_size, app_fw_payload_size);
 	buf = g_bytes_get_data (app_fw_payload, &bufsz);
 	if (!kt_dp_get_chip_id_from_fw_buf (buf, bufsz, &chip_id, &fw_bin_flag)) {
-		g_prefix_error (error, "No valid chip ID is found in the firmware: ");
+		g_set_error_literal(error,
+				    FWUPD_ERROR,
+				    FWUPD_ERROR_INTERNAL,
+				    "No valid chip ID is found in the firmware");
 		return FALSE;
 	}
 

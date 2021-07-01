@@ -46,8 +46,8 @@ fu_kinetic_dp_device_init (FuKineticDpDevice *self)
 
 	fu_device_add_protocol (FU_DEVICE (self), KINETIC_DP_CUSTOM_UPDATE_PROTOCOL);
 	fu_device_set_vendor (FU_DEVICE (self), "Kinetic");
-	fu_device_add_vendor_id (FU_DEVICE (self), "DRM_DP_AUX_DEV:0x[TBD]");		// <TODO> How to determine the vendor ID?
-	fu_device_set_summary (FU_DEVICE (self), "Multi-Stream Transport Device");	// <TODO> How to distinguish SST or MST device
+	fu_device_add_vendor_id (FU_DEVICE (self), "DRM_DP_AUX_DEV:0x[TBD]");		/* <TODO> How to determine the vendor ID? */
+	fu_device_set_summary (FU_DEVICE (self), "Multi-Stream Transport Device");	/* <TODO> How to distinguish SST or MST device */
 	fu_device_add_icon (FU_DEVICE (self), "video-display");
 	fu_device_set_version_format (FU_DEVICE (self), FWUPD_VERSION_FORMAT_TRIPLET);
 	fu_udev_device_set_flags (FU_UDEV_DEVICE (self),
@@ -140,7 +140,7 @@ fu_kinetic_dp_device_rescan (FuDevice *device, GError **error)
 
 	KtDpDevInfo *dp_dev_info = NULL;
 
-	// <TODO> Now only support to do ISP for Host chip
+	/* <TODO> Now only support to do ISP for Host chip */
 	if (!fu_kinetic_dp_aux_isp_read_device_info (self, DEV_HOST, &dp_dev_info, error)) {
 		g_prefix_error (error, "Failed to read device info: ");
 		return FALSE;
@@ -167,11 +167,11 @@ fu_kinetic_dp_device_rescan (FuDevice *device, GError **error)
 	/* detect chip family */
 	switch (self->family) {
 	case FU_KINETIC_DP_FAMILY_JAGUAR:
-		//fu_device_set_firmware_size_max (device, 0x10000);    // <TODO> Determine max firmware size for Jaguar
+		/* <TODO> Set max firmware size for Jaguar */
 		fu_device_add_instance_id_full (device, "KTDP-KT50X0", FU_DEVICE_INSTANCE_FLAG_ONLY_QUIRKS);
 		break;
 	case FU_KINETIC_DP_FAMILY_MUSTANG:
-		//fu_device_set_firmware_size_max (device, 0x10000);    // <TODO> Determine max firmware size for Mustang
+		/* <TODO> Determine max firmware size for Mustang */
 		fu_device_add_instance_id_full (device, "KTDP-KT52X0", FU_DEVICE_INSTANCE_FLAG_ONLY_QUIRKS);
 		break;
 	default:
@@ -185,7 +185,7 @@ fu_kinetic_dp_device_rescan (FuDevice *device, GError **error)
 	guid2 = g_strdup_printf ("KT-DP-%s", name_family);
 	fu_device_add_instance_id (FU_DEVICE (self), guid2);
 
-	// <TODO> check if a valid device to update?
+	/* <TODO> check if a valid device to update */
 	fu_device_add_flag (device, FWUPD_DEVICE_FLAG_UPDATABLE);
 
 	return TRUE;
@@ -199,7 +199,6 @@ fu_kinetic_dp_device_class_init (FuKineticDpDeviceClass *klass)
 
 	object_class->finalize = fu_kinetic_dp_device_finalize;
 
-	//klass_device->to_string = fu_kinetic_dp_device_to_string;
 	klass_device->rescan = fu_kinetic_dp_device_rescan;
 	klass_device->write_firmware = fu_kinetic_dp_device_write_firmware;
 	klass_device->prepare_firmware = fu_kinetic_dp_device_prepare_firmware;

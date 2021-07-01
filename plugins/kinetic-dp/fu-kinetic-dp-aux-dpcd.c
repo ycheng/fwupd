@@ -59,7 +59,7 @@ fu_kinetic_dp_aux_dpcd_read_branch_id_str (FuKineticDpConnection *connection,
 		return FALSE;
 	}
 
-	// Clear the buffer to all 0s as DP spec mentioned
+	/* Clear the buffer to all 0s as DP spec mentioned */
 	memset (buf, 0, DPCD_SIZE_BRANCH_DEV_ID_STR);
 
 	if (!fu_kinetic_dp_connection_read (connection, DPCD_ADDR_BRANCH_DEV_ID_STR, buf, DPCD_SIZE_BRANCH_DEV_ID_STR, error)) {

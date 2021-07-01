@@ -17,9 +17,7 @@ typedef struct
 	guint8		str_len;
 } KtDpChipBrIdStrTable;
 
-// ---------------------------------------------------------------
-// Kinetic chip DPCD branch ID string table
-// ---------------------------------------------------------------
+/* Kinetic chip DPCD branch ID string table */
 static const KtDpChipBrIdStrTable kt_dp_branch_dev_info_table[] =
 {
 	/* Jaguar MCDP50x0 */
@@ -74,7 +72,7 @@ fu_kinetic_dp_aux_isp_get_dev_info_from_branch_id (const guint8 *br_id_str_buf,
 {
 	guint32 i = 0;
 	guint32 num = sizeof (kt_dp_branch_dev_info_table) / sizeof (kt_dp_branch_dev_info_table[0]);
-	g_autofree gchar *str = NULL;   // Just for printing error log
+	g_autofree gchar *str = NULL;   /* Just for printing error log */
 
 	g_return_val_if_fail (br_id_str_buf != NULL, FALSE);
 	g_return_val_if_fail (br_id_str_buf_size >= DPCD_SIZE_BRANCH_DEV_ID_STR, FALSE);
@@ -83,16 +81,16 @@ fu_kinetic_dp_aux_isp_get_dev_info_from_branch_id (const guint8 *br_id_str_buf,
 
 	dev_info->chip_id = KT_CHIP_NONE;
 	dev_info->fw_run_state = KT_FW_STATE_RUN_NONE;
-	memset (dev_info->branch_id_str, 0, DPCD_SIZE_BRANCH_DEV_ID_STR);	// Clear the buffer to all 0s as DP spec mentioned
+	memset (dev_info->branch_id_str, 0, DPCD_SIZE_BRANCH_DEV_ID_STR);	/* Clear the buffer to all 0s as DP spec mentioned */
 
-	// Find the device info by branch ID string
+	/* Find the device info by branch ID string */
 	for (i = 0; i < num; i++) {
 		if (0 == memcmp (br_id_str_buf, kt_dp_branch_dev_info_table[i].id_str, kt_dp_branch_dev_info_table[i].str_len)) {
-			// Found the chip in the table
+			/* Found the chip in the table */
 			dev_info->chip_id = kt_dp_branch_dev_info_table[i].chip_id;
 			dev_info->fw_run_state = kt_dp_branch_dev_info_table[i].fw_run_state;
 			if (!fu_memcpy_safe (dev_info->branch_id_str, sizeof(dev_info->branch_id_str), 0x0,	/* dst */
-					     br_id_str_buf, br_id_str_buf_size, br_id_str_buf_size,		/* src */
+					     br_id_str_buf, br_id_str_buf_size, 0x0,				/* src */
 					     DPCD_SIZE_BRANCH_DEV_ID_STR, error))
 				return FALSE;
 
@@ -100,7 +98,7 @@ fu_kinetic_dp_aux_isp_get_dev_info_from_branch_id (const guint8 *br_id_str_buf,
 		}
 	}
 
-	// There might not always be null-terminated character '\0' in DPCD branch ID string (when length is 6)
+	/* There might not always be null-terminated character '\0' in DPCD branch ID string (when length is 6) */
 	str = g_strndup ((const gchar *)br_id_str_buf, DPCD_SIZE_BRANCH_DEV_ID_STR);
 	g_set_error (error,
 		     FWUPD_ERROR,
@@ -119,7 +117,7 @@ fu_kinetic_dp_aux_isp_read_chip_id_and_state (FuKineticDpConnection *connection,
 {
 	guint8 branch_id[DPCD_SIZE_BRANCH_DEV_ID_STR] = {0};
 
-	// Detail information is from DPCD branch ID string
+	/* Detail information is obtained from DPCD branch ID string */
 	if (!fu_kinetic_dp_aux_dpcd_read_branch_id_str (connection, branch_id, DPCD_SIZE_BRANCH_DEV_ID_STR, error)) {
 		return FALSE;
 	}
@@ -154,7 +152,7 @@ fu_kinetic_dp_aux_isp_enable_aux_forward (FuKineticDpConnection *connection,
 			return FALSE;
 		}
 
-		g_usleep (10 * 1000);	// Wait 10ms for host to process AUX forwarding command
+		g_usleep (10 * 1000);	/* Wait 10ms for host to process AUX forwarding command */
 
 		return TRUE;
 	}
@@ -186,7 +184,7 @@ fu_kinetic_dp_aux_isp_disable_aux_forward (FuKineticDpConnection *connection,
 	}
 
 	if (root_dev_chip_id == KT_CHIP_JAGUAR_5000 || root_dev_chip_id == KT_CHIP_MUSTANG_5200) {
-		g_usleep (5 * 1000);	// Wait 5ms
+		g_usleep (5 * 1000);	/* Wait 5ms */
 		return fu_kinetic_dp_secure_aux_isp_disable_aux_forward (connection, error);
 	}
 
@@ -221,7 +219,7 @@ fu_kinetic_dp_aux_isp_read_device_info (FuKineticDpDevice *self,
 	dev_info_local.is_dual_bank_supported = FALSE;
 	dev_info_local.flash_bank_idx = BANK_NONE;
 
-	// Get basic chip information (Chip ID, F/W work state)
+	/* Get basic chip information (Chip ID, F/W work state) */
 	connection = fu_kinetic_dp_connection_new (fu_udev_device_get_fd (FU_UDEV_DEVICE (self)));
 
 	/* <TODO> AUX-ISP for DFP device
@@ -232,7 +230,7 @@ fu_kinetic_dp_aux_isp_read_device_info (FuKineticDpDevice *self,
 		return FALSE;
 	}
 
-	// Get more information from each control library
+	/* Get more information from each control library */
 	if (KT_CHIP_JAGUAR_5000 == dev_info_local.chip_id || KT_CHIP_MUSTANG_5200 == dev_info_local.chip_id) {
 		/* <TODO> Make the control a derivable class to support different behaviors and DPCD definitions
 		 *        while processing ISP. (if needed)
@@ -242,7 +240,11 @@ fu_kinetic_dp_aux_isp_read_device_info (FuKineticDpDevice *self,
 		    return FALSE;
 		}
 	} else {
-		g_prefix_error (error, "Not supported chip to do ISP: ");
+		g_set_error (error,
+			     FWUPD_ERROR,
+			     FWUPD_ERROR_INTERNAL,
+			     "Not supported chip [%u] to do AUX-ISP",
+			     dev_info_local.chip_id);
 		return FALSE;
 	}
 
@@ -251,13 +253,13 @@ fu_kinetic_dp_aux_isp_read_device_info (FuKineticDpDevice *self,
 		dp_root_dev_state = dev_info_local.fw_run_state;
 	}
 
-	// Store read info to static allocated structure
+	/* Store read info to static allocated structure */
 	if (!fu_memcpy_safe((guint8 *)&dp_dev_infos[target_port], sizeof (dp_dev_infos[target_port]), 0x0,	/* dst */
 			     (guint8 *)&dev_info_local, sizeof(dev_info_local), 0x0,				/* src */
 			     sizeof(KtDpDevInfo), error))							/* size */
 		return FALSE;
 
-	// Assign pointer to specified structure to output parameter
+	/* Assign pointer to specified structure to output parameter */
 	*dev_info = &dp_dev_infos[target_port];
 
 	return TRUE;
@@ -269,9 +271,10 @@ fu_kinetic_dp_aux_isp_init (void)
 	dp_root_dev_chip_id = KT_CHIP_NONE;
 	dp_root_dev_state = KT_FW_STATE_RUN_NONE;
 
-	// Init Secure AUX-ISP
+	/* Init Secure AUX-ISP */
 	fu_kinetic_dp_secure_aux_isp_init ();
-	// <TODO> Init other kind of AUX-ISP protocol
+
+	/* Init other kind of AUX-ISP protocol here */
 }
 
 gboolean
@@ -280,8 +283,8 @@ fu_kinetic_dp_aux_isp_start (FuKineticDpDevice *self,
 			     GError **error)
 {
 	/* <TODO> Only test ISP for host device now
-	*        AUX-ISP for DFP devices is not implemented yet
-	*/
+	 *        AUX-ISP for DFP devices is not implemented yet
+	 */
 	KtDpDevInfo *dev_info = &dp_dev_infos[DEV_HOST];
 
 	if (KT_CHIP_JAGUAR_5000 == dev_info->chip_id || KT_CHIP_MUSTANG_5200 == dev_info->chip_id) {
@@ -290,8 +293,11 @@ fu_kinetic_dp_aux_isp_start (FuKineticDpDevice *self,
 			return FALSE;
 		}
 	} else {
-		// <TODO> support older Kinetic's chips?
-		g_prefix_error (error, "Not supported to do ISP for this chip family: ");
+		g_set_error (error,
+			     FWUPD_ERROR,
+			     FWUPD_ERROR_INTERNAL,
+			     "Not supported to do ISP for this chip [%u]",
+			     dev_info->chip_id);
 		return FALSE;
 	}
 

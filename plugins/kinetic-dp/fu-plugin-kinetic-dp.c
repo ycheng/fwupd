@@ -13,7 +13,7 @@
 #include "fu-kinetic-dp-device.h"
 #include "fu-kinetic-dp-firmware.h"
 
-#define FU_KINETIC_DP_DRM_REPLUG_DELAY	5	/* sec */
+#define FU_KINETIC_DP_DRM_REPLUG_DELAY	5	/* Unit: sec */
 
 struct FuPluginData {
 	GPtrArray	*devices;
