@@ -16,8 +16,8 @@
 #define MAX_WAIT_TIME	3	/* unit : second */
 
 struct _FuKineticDpConnection {
-	GObject		parent_instance;
-	gint		fd;        /* not owned by the connection */
+	GObject		 parent_instance;
+	gint		 fd;        /* not owned by the connection */
 };
 
 G_DEFINE_TYPE (FuKineticDpConnection, fu_kinetic_dp_connection, G_TYPE_OBJECT)
@@ -39,8 +39,7 @@ fu_kinetic_dp_connection_aux_node_read (FuKineticDpConnection *self,
 					gint length,
 					GError **error)
 {
-	if (lseek (self->fd, offset, SEEK_SET) != offset)
-	{
+	if (lseek (self->fd, offset, SEEK_SET) != offset) {
 		g_set_error (error,
 			     G_IO_ERROR,
 			     G_IO_ERROR_INVALID_DATA,
@@ -49,8 +48,7 @@ fu_kinetic_dp_connection_aux_node_read (FuKineticDpConnection *self,
 		return FALSE;
 	}
 
-	if (read (self->fd, buf, length) != length)
-	{
+	if (read (self->fd, buf, length) != length) {
 		g_set_error (error,
 			     G_IO_ERROR,
 			     G_IO_ERROR_INVALID_DATA,
@@ -69,8 +67,7 @@ fu_kinetic_dp_connection_aux_node_write (FuKineticDpConnection *self,
 					 gint length,
 					 GError **error)
 {
-	if (lseek (self->fd, offset, SEEK_SET) != offset)
-	{
+	if (lseek (self->fd, offset, SEEK_SET) != offset) {
 		g_set_error (error,
 			     G_IO_ERROR,
 			     G_IO_ERROR_INVALID_DATA,
@@ -79,8 +76,7 @@ fu_kinetic_dp_connection_aux_node_write (FuKineticDpConnection *self,
 		return FALSE;
 	}
 
-	if (write (self->fd, buf, length) != length)
-	{
+	if (write (self->fd, buf, length) != length) {
 		g_set_error (error,
 			     G_IO_ERROR,
 			     G_IO_ERROR_INVALID_DATA,

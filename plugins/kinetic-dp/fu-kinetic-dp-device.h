@@ -14,5 +14,5 @@ G_DECLARE_FINAL_TYPE (FuKineticDpDevice, fu_kinetic_dp_device, FU, KINETIC_DP_DE
 
 FuKineticDpDevice	*fu_kinetic_dp_device_new		(FuUdevDevice		*device);
 
-void			fu_kinetic_dp_device_set_system_type	(FuKineticDpDevice	*self,
+void			 fu_kinetic_dp_device_set_system_type	(FuKineticDpDevice	*self,
 								 const gchar		*system_type);

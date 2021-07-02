@@ -17,24 +17,28 @@
 
 struct FuPluginData {
 	GPtrArray	*devices;
-	guint		drm_changed_id;
+	guint		 drm_changed_id;
 };
 
 static void
 fu_plugin_kinetic_dp_device_rescan (FuPlugin *plugin, FuDevice *device)
 {
-	g_autoptr (FuDeviceLocker) locker = NULL;
-	g_autoptr (GError) error_local = NULL;
+	g_autoptr(FuDeviceLocker) locker = NULL;
+	g_autoptr(GError) error_local = NULL;
 
 	/* open fd */
 	locker = fu_device_locker_new (device, &error_local);
 	if (locker == NULL) {
-		g_debug ("Failed to open device %s: %s", fu_device_get_logical_id (device), error_local->message);
+		g_debug ("failed to open device %s: %s",
+			 fu_device_get_logical_id (device),
+			 error_local->message);
 		return;
 	}
 
 	if (!fu_device_rescan (device, &error_local)) {
-		g_debug ("No device found on %s: %s", fu_device_get_logical_id (device), error_local->message);
+		g_debug ("no device found on %s: %s",
+			 fu_device_get_logical_id (device),
+			 error_local->message);
 		if (fu_device_has_flag (device, FWUPD_DEVICE_FLAG_REGISTERED))
 			fu_plugin_device_remove (plugin, device);
 	} else {
@@ -90,8 +94,8 @@ fu_plugin_backend_device_added (FuPlugin *plugin, FuDevice *device, GError **err
 {
 	FuContext *ctx = fu_plugin_get_context (plugin);
 	FuPluginData *priv = fu_plugin_get_data (plugin);
-	g_autoptr (FuDeviceLocker) locker = NULL;
-	g_autoptr (FuKineticDpDevice) dev = NULL;
+	g_autoptr(FuDeviceLocker) locker = NULL;
+	g_autoptr(FuKineticDpDevice) dev = NULL;
 
 	/* interesting device? */
 	if (!FU_IS_UDEV_DEVICE (device))
@@ -120,7 +124,7 @@ fu_plugin_update (FuPlugin *plugin,
 		  FwupdInstallFlags flags,
 		  GError **error)
 {
-	g_autoptr (FuDeviceLocker) locker = fu_device_locker_new (device, error);
+	g_autoptr(FuDeviceLocker) locker = fu_device_locker_new (device, error);
 	if (locker == NULL)
 		return FALSE;
 	if (!fu_device_write_firmware (device, blob_fw, flags, error))

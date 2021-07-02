@@ -19,7 +19,7 @@
 #define DPCD_ADDR_FLOAT_CMD_STATUS_REG		0x0050D
 #define DPCD_ADDR_FLOAT_PARAM_REG		0x0050E
 
-/* Below DPCD registers are used while running application */
+/* DPCD registers are used while running application */
 #define DPCD_ADDR_FLOAT_CUSTOMER_FW_MIN_REV	0x00514
 #define DPCD_SIZE_FLOAT_CUSTOMER_FW_MIN_REV	1
 #define DPCD_ADDR_FLOAT_CUSTOMER_PROJ_ID	0x00515
@@ -27,7 +27,7 @@
 #define DPCD_ADDR_FLOAT_PRODUCT_TYPE		0x00516
 #define DPCD_SIZE_FLOAT_PRODUCT_TYPE		1
 
-/* Below DPCD registers are used while running ISP driver */
+/* DPCD registers are used while running ISP driver */
 #define DPCD_ADDR_FLOAT_ISP_REPLY_LEN_REG	0x00513
 #define DPCD_SIZE_FLOAT_ISP_REPLY_LEN_REG	1		/* 0x00513			*/
 
@@ -40,7 +40,7 @@
 
 #define INIT_CRC16				0x1021
 
-/* Each device should have a corresponding ISP info instance */
+/* each device should have a corresponding ISP info instance */
 static guint32 isp_payload_procd_size;
 static guint32 isp_procd_size;
 static guint32 isp_total_data_size;
@@ -80,10 +80,14 @@ _accumulate_crc16 (guint16 *prev_crc16, const guint8 *in_data_ptr, guint16 data_
 }
 
 static gboolean
-fu_kinetic_dp_secure_aux_isp_read_param_reg (FuKineticDpConnection *self, guint8 *dpcd_val, GError **error)
+fu_kinetic_dp_secure_aux_isp_read_param_reg (FuKineticDpConnection *self,
+					     guint8 *dpcd_val,
+					     GError **error)
 {
-	if (!fu_kinetic_dp_connection_read (self, DPCD_ADDR_FLOAT_PARAM_REG, dpcd_val, 1, error)) {
-		g_prefix_error (error, "Failed to read DPCD_KT_PARAM_REG: ");
+	if (!fu_kinetic_dp_connection_read (self,
+					    DPCD_ADDR_FLOAT_PARAM_REG,
+					    dpcd_val, 1, error)) {
+		g_prefix_error (error, "failed to read DPCD_KT_PARAM_REG: ");
 		return FALSE;
 	}
 
@@ -91,12 +95,17 @@ fu_kinetic_dp_secure_aux_isp_read_param_reg (FuKineticDpConnection *self, guint8
 }
 
 static gboolean
-fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (FuKineticDpConnection *connection, guint8 cmd_id, GError **error)
+fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (FuKineticDpConnection *connection,
+						guint8 cmd_id,
+						GError **error)
 {
 	cmd_id |= DPCD_KT_CONFIRMATION_BIT;
 
-	if (!fu_kinetic_dp_connection_write  (connection, DPCD_ADDR_FLOAT_CMD_STATUS_REG, &cmd_id, sizeof (cmd_id), error)) {
-		g_prefix_error (error, "Failed to write DPCD_KT_CMD_STATUS_REG: ");
+	if (!fu_kinetic_dp_connection_write (connection,
+					     DPCD_ADDR_FLOAT_CMD_STATUS_REG,
+					     &cmd_id, sizeof (cmd_id),
+					     error)) {
+		g_prefix_error (error, "failed to write DPCD_KT_CMD_STATUS_REG: ");
 		return FALSE;
 	}
 
@@ -104,13 +113,16 @@ fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (FuKineticDpConnection *connectio
 }
 
 static gboolean
-fu_kinetic_dp_secure_aux_isp_clear_kt_prop_cmd (FuKineticDpConnection *connection, GError **error)
+fu_kinetic_dp_secure_aux_isp_clear_kt_prop_cmd (FuKineticDpConnection *connection,
+						GError **error)
 {
 	guint8 cmd_id = KT_DPCD_CMD_STS_NONE;
 
-	if (!fu_kinetic_dp_connection_write (connection, DPCD_ADDR_FLOAT_CMD_STATUS_REG, &cmd_id, sizeof (cmd_id), error))
-	{
-		g_prefix_error (error, "Failed to write DPCD_KT_CMD_STATUS_REG: ");
+	if (!fu_kinetic_dp_connection_write (connection,
+					     DPCD_ADDR_FLOAT_CMD_STATUS_REG,
+					     &cmd_id, sizeof (cmd_id),
+					     error)) {
+		g_prefix_error (error, "failed to write DPCD_KT_CMD_STATUS_REG: ");
 		return FALSE;
 	}
 
@@ -134,11 +146,15 @@ fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (FuKineticDpConnection *self,
 
 	/* Wait for the sent proprietary command to be processed */
 	while (max_time_ms != 0) {
-		if (!fu_kinetic_dp_connection_read (self, DPCD_ADDR_FLOAT_CMD_STATUS_REG, (guint8 *)&dpcd_val, 1, error)) {
+		if (!fu_kinetic_dp_connection_read (self,
+						    DPCD_ADDR_FLOAT_CMD_STATUS_REG,
+						    (guint8 *) &dpcd_val, 1,
+						    error)) {
 			return FALSE;
 		}
 
-		if (dpcd_val != (cmd_id | DPCD_KT_CONFIRMATION_BIT)) {	/* Target responded */
+		/* target responded */
+		if (dpcd_val != (cmd_id | DPCD_KT_CONFIRMATION_BIT)) {
 			if (dpcd_val != cmd_id) {
 				*status = dpcd_val & DPCD_KT_COMMAND_MASK;
 
@@ -146,17 +162,18 @@ fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (FuKineticDpConnection *self,
 					g_set_error_literal (error,
 							     FWUPD_ERROR,
 							     FWUPD_ERROR_INTERNAL,
-							     "Checking CRC of chunk data is failed");
+							     "checking CRC of chunk data is failed");
 				} else {
 					g_set_error (error,
 						     FWUPD_ERROR,
 						     FWUPD_ERROR_INTERNAL,
-						     "Invalid replied value in DPCD_KT_CMD_STATUS_REG: 0x%X",
+						     "invalid replied value in DPCD_KT_CMD_STATUS_REG: 0x%X",
 						     *status);
 				}
 				return FALSE;
 			} else {	/* dpcd_val == cmd_id */
-				/* Confirmation bit is cleared by sink, means that sent command is processed */
+				/* confirmation bit is cleared by sink,
+				 * means that sent command is processed */
 				return TRUE;
 			}
 		}
@@ -172,8 +189,7 @@ fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (FuKineticDpConnection *self,
 	g_set_error_literal (error,
 			     FWUPD_ERROR,
 			     FWUPD_ERROR_INTERNAL,
-			     "Waiting DPCD_KT_CMD_STATUS_REG timed-out");
-
+			     "waiting DPCD_KT_CMD_STATUS_REG timed-out");
 	return FALSE;
 }
 
@@ -186,10 +202,13 @@ fu_kinetic_dp_secure_aux_isp_read_dpcd_reply_data_reg (FuKineticDpConnection *se
 {
 	guint8 read_data_len;
 
-	*read_len = 0;  /* Set the output to 0 */
+	/* set the output to 0 */
+	*read_len = 0;
 
-	if (!fu_kinetic_dp_connection_read (self, DPCD_ADDR_FLOAT_ISP_REPLY_LEN_REG, &read_data_len, 1, error)) {
-		g_prefix_error (error, "Failed to read DPCD_ISP_REPLY_DATA_LEN_REG: ");
+	if (!fu_kinetic_dp_connection_read (self,
+					    DPCD_ADDR_FLOAT_ISP_REPLY_LEN_REG,
+					    &read_data_len, 1, error)) {
+		g_prefix_error (error, "failed to read DPCD_ISP_REPLY_DATA_LEN_REG: ");
 		return FALSE;
 	}
 
@@ -197,18 +216,19 @@ fu_kinetic_dp_secure_aux_isp_read_dpcd_reply_data_reg (FuKineticDpConnection *se
 		g_set_error (error,
 			     FWUPD_ERROR,
 			     FWUPD_ERROR_INTERNAL,
-			     "Buffer size [%u] is not enough to read DPCD_ISP_REPLY_DATA_REG [%u]",
+			     "buffer size [%u] is not enough to read DPCD_ISP_REPLY_DATA_REG [%u]",
 			     buf_size,
 			     read_data_len);
 		return FALSE;
 	}
 
 	if (read_data_len > 0) {
-		if (!fu_kinetic_dp_connection_read (self, DPCD_ADDR_FLOAT_ISP_REPLY_DATA_REG, buf, read_data_len, error)) {
-			g_prefix_error (error, "Failed to read DPCD_ISP_REPLY_DATA_REG: ");
+		if (!fu_kinetic_dp_connection_read (self,
+						    DPCD_ADDR_FLOAT_ISP_REPLY_DATA_REG,
+						    buf, read_data_len, error)) {
+			g_prefix_error (error, "failed to read DPCD_ISP_REPLY_DATA_REG: ");
 			return FALSE;
 		}
-
 		*read_len = read_data_len;
 	}
 
@@ -224,18 +244,29 @@ fu_kinetic_dp_secure_aux_isp_write_dpcd_reply_data_reg (FuKineticDpConnection *s
 	gboolean ret = FALSE;
 	gboolean res;
 
-	if (len > DPCD_SIZE_FLOAT_ISP_REPLY_DATA_REG)
+	if (len > DPCD_SIZE_FLOAT_ISP_REPLY_DATA_REG) {
+		g_set_error (error,
+			     FWUPD_ERROR,
+			     FWUPD_ERROR_INTERNAL,
+			     "length bigger than DPCD_SIZE_FLOAT_ISP_REPLY_DATA_REG [%u]",
+			     len);
 		return FALSE;
-
-	res = fu_kinetic_dp_connection_write (self, DPCD_ADDR_FLOAT_ISP_REPLY_DATA_REG, buf, len, error);
-	if (!res) {
-		g_prefix_error (error, "Failed to write DPCD_KT_REPLY_DATA_REG: ");
-		len = 0;    /* Clear reply data length to 0 if failed to write reply data */
 	}
 
-	if (fu_kinetic_dp_connection_write (self, DPCD_ADDR_FLOAT_ISP_REPLY_LEN_REG, &len, DPCD_SIZE_FLOAT_ISP_REPLY_LEN_REG, error) &&
-	    TRUE == res) {
-		/* Both reply data and reply length are written successfully */
+	res = fu_kinetic_dp_connection_write (self,
+					      DPCD_ADDR_FLOAT_ISP_REPLY_DATA_REG,
+					      buf, len, error);
+	if (!res) {
+		/* clear reply data length to 0 if failed to write reply data */
+		g_prefix_error (error, "failed to write DPCD_KT_REPLY_DATA_REG: ");
+		len = 0;
+	}
+
+	if (fu_kinetic_dp_connection_write (self,
+					    DPCD_ADDR_FLOAT_ISP_REPLY_LEN_REG,
+					    &len, DPCD_SIZE_FLOAT_ISP_REPLY_LEN_REG,
+					    error) && res) {
+		/* both reply data and reply length are written successfully */
 		ret = TRUE;
 	}
 
@@ -243,10 +274,14 @@ fu_kinetic_dp_secure_aux_isp_write_dpcd_reply_data_reg (FuKineticDpConnection *s
 }
 
 static gboolean
-fu_kinetic_dp_secure_aux_isp_write_mca_oui (FuKineticDpConnection *connection, GError **error)
+fu_kinetic_dp_secure_aux_isp_write_mca_oui (FuKineticDpConnection *connection,
+					    GError **error)
 {
-	guint8 mca_oui[DPCD_SIZE_IEEE_OUI] = {MCA_OUI_BYTE_0, MCA_OUI_BYTE_1, MCA_OUI_BYTE_2};
-
+	guint8 mca_oui[DPCD_SIZE_IEEE_OUI] = {
+		MCA_OUI_BYTE_0,
+		MCA_OUI_BYTE_1,
+		MCA_OUI_BYTE_2
+	};
 	return fu_kinetic_dp_aux_dpcd_write_oui (connection, mca_oui, error);
 }
 
@@ -259,16 +294,27 @@ fu_kinetic_dp_secure_aux_isp_enter_code_loading_mode (FuKineticDpConnection *sel
 	guint8 status;
 
 	if (is_app_mode) {
-		/* Send "DPCD_MCA_CMD_PREPARE_FOR_ISP_MODE" command first to make DPCD 514h ~ 517h writable */
-		if (!fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (self, KT_DPCD_CMD_PREPARE_FOR_ISP_MODE, 500, 10, &status, error))
+		/* send "DPCD_MCA_CMD_PREPARE_FOR_ISP_MODE" command first to make DPCD 514h ~ 517h writable */
+		if (!fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (self,
+								    KT_DPCD_CMD_PREPARE_FOR_ISP_MODE,
+								    500, 10,
+								    &status,
+								    error))
 			return FALSE;
 	}
 
 	/* Update payload size to DPCD reply data reg first */
-	if (!fu_kinetic_dp_secure_aux_isp_write_dpcd_reply_data_reg (self, (guint8 *)&code_size, sizeof (code_size), error))
+	if (!fu_kinetic_dp_secure_aux_isp_write_dpcd_reply_data_reg (self,
+								     (guint8 *) &code_size,
+								     sizeof (code_size),
+								     error))
 		return FALSE;
 
-	if (!fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (self, KT_DPCD_CMD_ENTER_CODE_LOADING_MODE, 500, 10, &status, error))
+	if (!fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (self,
+							    KT_DPCD_CMD_ENTER_CODE_LOADING_MODE,
+							    500, 10,
+							    &status,
+							    error))
 		return FALSE;
 
 	return TRUE;
@@ -299,20 +345,30 @@ fu_kinetic_dp_secure_aux_isp_send_payload (FuKineticDpConnection *connection,
 
 		_accumulate_crc16 ((guint16 *)&crc16, temp_buf, aux_wr_size);
 
-		/* Put accumulated CRC16 of current 32KB chunk to DPCD_REPLY_DATA_REG */
+		/* put accumulated CRC16 of current 32KB chunk to DPCD_REPLY_DATA_REG */
 		if ((aux_win_addr + aux_wr_size) > DPCD_ADDR_KT_AUX_WIN_END ||
 		    (remain_len - aux_wr_size) == 0) {
-			if (!fu_kinetic_dp_secure_aux_isp_write_dpcd_reply_data_reg (connection, (guint8 *)&crc16, sizeof(crc16), error)) {
-				g_prefix_error(error, "Failed to send CRC16 to reply data register: ");
+			if (!fu_kinetic_dp_secure_aux_isp_write_dpcd_reply_data_reg (connection,
+										     (guint8 *)&crc16,
+										     sizeof(crc16),
+										     error)) {
+				g_prefix_error(error, "failed to send CRC16 to reply data register: ");
 				return FALSE;
 			}
 
-			crc16 = INIT_CRC16;	/* Reset to initial CRC16 value for new chunk */
+			/* reset to initial CRC16 value for new chunk */
+			crc16 = INIT_CRC16;
 		}
 
-		/* Send payload in each AUX write transaction whose maximum length is 16 bytes */
-		if (!fu_kinetic_dp_connection_write(connection, aux_win_addr, temp_buf, aux_wr_size, error)) {
-			g_prefix_error (error, "Failed to send payload on AUX write %u: ", isp_procd_size);
+		/* send payload in each AUX write transaction whose maximum length is 16 bytes */
+		if (!fu_kinetic_dp_connection_write (connection,
+						     aux_win_addr,
+						     temp_buf,
+						     aux_wr_size,
+						     error)) {
+			g_prefix_error (error,
+					"failed to send payload on AUX write %u: ",
+					isp_procd_size);
 			return FALSE;
 		}
 
@@ -323,7 +379,7 @@ fu_kinetic_dp_secure_aux_isp_send_payload (FuKineticDpConnection *connection,
 		isp_payload_procd_size += aux_wr_size;
 
 		if ((aux_win_addr > DPCD_ADDR_KT_AUX_WIN_END) || (remain_len == 0)) {
-			/* Notify that a 32KB chunk of payload has been sent to AUX window */
+			/* notify that a 32KB chunk of payload has been sent to AUX window */
 			if (!fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (connection,
 									    KT_DPCD_CMD_CHUNK_DATA_PROCESSED,
 									    wait_time_ms,
@@ -332,7 +388,8 @@ fu_kinetic_dp_secure_aux_isp_send_payload (FuKineticDpConnection *connection,
 									    error))
 				return FALSE;
 
-			aux_win_addr = DPCD_ADDR_KT_AUX_WIN;	/* Reset AUX window write address to start address */
+			/* reset AUX window write address to start address */
+			aux_win_addr = DPCD_ADDR_KT_AUX_WIN;
 		}
 	}
 
@@ -359,7 +416,8 @@ fu_kinetic_dp_secure_aux_isp_wait_dpcd_cmd_cleared (FuKineticDpConnection *self,
 			return TRUE;	/* Status is cleared by sink */
 
 		if ((dpcd_val & DPCD_KT_CONFIRMATION_BIT) != DPCD_KT_CONFIRMATION_BIT) {
-			/* Status is not cleared but confirmation bit is cleared, it means that target responded with failure */
+			/* status is not cleared but confirmation bit is cleared,
+			 * it means that target responded with failure */
 			*status = dpcd_val;
 			return FALSE;
 		}
@@ -377,7 +435,6 @@ fu_kinetic_dp_secure_aux_isp_wait_dpcd_cmd_cleared (FuKineticDpConnection *self,
 			     FWUPD_ERROR,
 			     FWUPD_ERROR_INTERNAL,
 			     "Waiting DPCD_ISP_SINK_STATUS_REG timed-out");
-
 	return FALSE;
 }
 
@@ -386,35 +443,39 @@ fu_kinetic_dp_secure_aux_isp_execute_isp_drv (FuKineticDpConnection *connection,
 {
 	guint8 status;
 	guint8 read_len;
-	guint8 reply_data[6] = {0};
+	guint8 reply_data[6] = { 0 };
 
-	/* In Jaguar, it takes about 1000 ms to boot up and initialize */
+	/* in Jaguar, it takes about 1000 ms to boot up and initialize */
 
 	flash_id = 0;
 	flash_size = 0;
 	read_flash_prog_time = 10;
 
-	if (!fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (connection, KT_DPCD_CMD_EXECUTE_RAM_CODE, error))
+	if (!fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (connection,
+							     KT_DPCD_CMD_EXECUTE_RAM_CODE,
+							     error))
 		return FALSE;
 
-	if (!fu_kinetic_dp_secure_aux_isp_wait_dpcd_cmd_cleared (connection, 1500, 100, &status, error))
-	{
+	if (!fu_kinetic_dp_secure_aux_isp_wait_dpcd_cmd_cleared (connection,
+								 1500, 100,
+								 &status,
+								 error)) {
 		if (KT_DPCD_STS_INVALID_IMAGE == status)
-			g_prefix_error (error, "Invalid ISP driver: ");
+			g_prefix_error (error, "invalid ISP driver: ");
 		else
-			g_prefix_error (error, "Failed to execute ISP driver: ");
-
+			g_prefix_error (error, "failed to execute ISP driver: ");
 		return FALSE;
 	}
 
 	if (!fu_kinetic_dp_secure_aux_isp_read_param_reg (connection, &status, error))
 		return FALSE;
 
-	if (status != KT_DPCD_STS_SECURE_ENABLED && status != KT_DPCD_STS_SECURE_DISABLED) {
+	if (status != KT_DPCD_STS_SECURE_ENABLED &&
+	    status != KT_DPCD_STS_SECURE_DISABLED) {
 		g_set_error_literal (error,
 				     FWUPD_ERROR,
 				     FWUPD_ERROR_INTERNAL,
-				     "Waiting for ISP driver ready... failed!");
+				     "waiting for ISP driver ready failed!");
 		return FALSE;
 	}
 
@@ -425,14 +486,18 @@ fu_kinetic_dp_secure_aux_isp_execute_isp_drv (FuKineticDpConnection *connection,
 		isp_total_data_size -= (FW_CERTIFICATE_SIZE * 2 + FW_RSA_SIGNATURE_BLOCK_SIZE * 2);
 	}
 
-	if (!fu_kinetic_dp_secure_aux_isp_read_dpcd_reply_data_reg (connection, reply_data, sizeof (reply_data), &read_len, error)) {
-		g_prefix_error (error, "Failed to read flash ID and size: ");
+	if (!fu_kinetic_dp_secure_aux_isp_read_dpcd_reply_data_reg (connection,
+								    reply_data,
+								    sizeof (reply_data),
+								    &read_len,
+								    error)) {
+		g_prefix_error (error, "failed to read flash ID and size: ");
 		return FALSE;
 	}
 
-	flash_id = (guint16)reply_data[0] << 8 | reply_data[1];
-	flash_size = (guint16)reply_data[2] << 8 | reply_data[3];
-	read_flash_prog_time = (guint16)reply_data[4] << 8 | reply_data[5];
+	flash_id = (guint16) reply_data[0] << 8 | reply_data[1];
+	flash_size = (guint16) reply_data[2] << 8 | reply_data[3];
+	read_flash_prog_time = (guint16) reply_data[4] << 8 | reply_data[5];
 
 	if (read_flash_prog_time == 0)
 		read_flash_prog_time = 10;
@@ -447,44 +512,53 @@ fu_kinetic_dp_secure_aux_isp_send_isp_drv (FuKineticDpConnection *connection,
 					   guint32 isp_drv_len,
 					   GError **error)
 {
-	g_debug ("Sending ISP driver payload... started");
+	g_debug ("sending ISP driver payload... started");
 
-	if (fu_kinetic_dp_secure_aux_isp_enter_code_loading_mode (connection, is_app_mode, isp_drv_len, error) == FALSE) {
-		g_prefix_error (error, "Enabling code-loading mode... failed: ");
+	if (!fu_kinetic_dp_secure_aux_isp_enter_code_loading_mode (connection,
+								  is_app_mode,
+								  isp_drv_len,
+								  error)) {
+		g_prefix_error (error, "enabling code-loading mode failed: ");
 		return FALSE;
 	}
 
-	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, isp_drv_data, isp_drv_len, 10000, 50, error)) {
-		g_prefix_error (error, "Sending ISP driver payload... failed: ");
+	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection,
+							isp_drv_data,
+							isp_drv_len,
+							10000, 50,
+							error)) {
+		g_prefix_error (error, "sending ISP driver payload failed: ");
 		return FALSE;
 	}
 
-	g_debug ("Sending ISP driver payload... done!");
-
-	if (!fu_kinetic_dp_secure_aux_isp_execute_isp_drv (connection, error))
-	{
-		g_prefix_error (error, "ISP driver booting up... failed: ");
+	g_debug ("sending ISP driver payload... done!");
+	if (!fu_kinetic_dp_secure_aux_isp_execute_isp_drv (connection, error)) {
+		g_prefix_error (error, "ISP driver booting up failed: ");
 		return FALSE;
 	}
 
-	g_debug ("Flash ID: 0x%04X", flash_id);
+	g_debug ("flash ID: 0x%04X", flash_id);
 
 	if (flash_size) {
-		if (flash_size < 2048)	/* One bank size in Jaguar is 1024KB */
-			g_debug ("Flash Size: %d KB, Dual Bank is not supported!", flash_size);
-		else
-			g_debug ("Flash Size: %d KB", flash_size);
+		/* one bank size in Jaguar is 1024KB */
+		if (flash_size < 2048) {
+			g_debug ("flash Size: %d KB, Dual Bank is not supported!",
+				 flash_size);
+		} else {
+			g_debug ("flash Size: %d KB", flash_size);
+		}
 	} else {
-		if (flash_id)
+		if (flash_id) {
 			g_set_error_literal(error,
 					    FWUPD_ERROR,
 					    FWUPD_ERROR_INTERNAL,
 					    "SPI flash not supported");
-		else
-			g_set_error_literal(error,
-					    FWUPD_ERROR,
-					    FWUPD_ERROR_INTERNAL,
-					    "SPI flash not connected");
+			return FALSE;
+		}
+		g_set_error_literal(error,
+				    FWUPD_ERROR,
+				    FWUPD_ERROR_INTERNAL,
+				    "SPI flash not connected");
 		return FALSE;
 	}
 
@@ -497,9 +571,9 @@ fu_kinetic_dp_secure_aux_isp_enable_fw_update_mode (FuKineticDpFirmware *firmwar
 						    GError **error)
 {
 	guint8 status;
-	guint8 pl_size_data[12] = {0};
+	guint8 pl_size_data[12] = { 0 };
 
-	g_debug ("Entering F/W loading mode...");
+	g_debug ("entering F/W loading mode...");
 
 	/* Send payload size to DPCD_MCA_REPLY_DATA_REG */
 	*(guint32 *)pl_size_data = fu_kinetic_dp_firmware_get_esm_payload_size (firmware);
@@ -509,17 +583,15 @@ fu_kinetic_dp_secure_aux_isp_enable_fw_update_mode (FuKineticDpFirmware *firmwar
 					(fu_kinetic_dp_firmware_get_is_fw_esm_xip_enabled (firmware) << 15);
 
 	if (!fu_kinetic_dp_secure_aux_isp_write_dpcd_reply_data_reg (connection, pl_size_data, sizeof(pl_size_data), error)) {
-		g_prefix_error (error, "Send payload size failed: ");
+		g_prefix_error (error, "send payload size failed: ");
 		return FALSE;
 	}
 
 	if (!fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (connection, KT_DPCD_CMD_ENTER_FW_UPDATE_MODE, 200000,
 							    500, &status, error)) {
-		g_prefix_error (error, "Entering F/W update mode... failed: ");
+		g_prefix_error (error, "entering F/W update mode failed: ");
 		return FALSE;
 	}
-
-	g_debug ("F/W loading mode... ready");
 
 	return TRUE;
 }
@@ -535,77 +607,84 @@ fu_kinetic_dp_secure_aux_isp_send_fw_payload (FuKineticDpConnection *connection,
 
 	if (is_isp_secure_auth_mode) {
 		/* Send ESM and App Certificates & RSA Signatures */
-		g_debug ("Sending Certificates... started");
+		g_debug ("sending certificates... started");
 
 		ptr = (guint8 *)fw_data;
-		if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, ptr, FW_CERTIFICATE_SIZE * 2 + FW_RSA_SIGNATURE_BLOCK_SIZE * 2,
+		if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, ptr,
+								FW_CERTIFICATE_SIZE * 2 + FW_RSA_SIGNATURE_BLOCK_SIZE * 2,
 								10000, 200, error)) {
-			g_prefix_error (error, "Sending Certificates... failed: ");
+			g_prefix_error (error, "sending certificates failed: ");
 			return FALSE;
 		}
 
-		g_debug ("Sending Certificates... done");
+		g_debug ("sending certificates... done");
 	}
 
 	/* Send ESM code */
-	g_debug ("Sending ESM... started");
+	g_debug ("sending ESM... started");
 
 	ptr = (guint8 *)fw_data + SPI_ESM_PAYLOAD_START;
-	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, ptr, fu_kinetic_dp_firmware_get_esm_payload_size (firmware),
+	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection,
+							ptr,
+							fu_kinetic_dp_firmware_get_esm_payload_size (firmware),
 							 10000, 200, error)) {
-		g_prefix_error (error, "Sending ESM... failed: ");
+		g_prefix_error (error, "sending ESM failed: ");
 		return FALSE;
 	}
 
-	g_debug ("Sending ESM... done");
+	g_debug ("sending ESM... done");
 
 	/* Send App code */
-	g_debug ("Sending App... started");
+	g_debug ("sending App... started");
 
 	ptr = (guint8 *)fw_data + SPI_APP_PAYLOAD_START;
-	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, ptr, fu_kinetic_dp_firmware_get_arm_app_code_size (firmware),
+	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection,
+							ptr,
+							fu_kinetic_dp_firmware_get_arm_app_code_size (firmware),
 							10000, 200, error)) {
-		g_prefix_error (error, "Sending App... failed: ");
+		g_prefix_error (error, "sending App failed: ");
 		return FALSE;
 	}
 
-	g_debug ("Sending App... done");
+	g_debug ("sending App... done");
 
 	/* Send App initialized data */
-	g_debug ("Sending App init data... started");
+	g_debug ("sending App init data... started");
 
 	ptr = (guint8 *)fw_data + (fu_kinetic_dp_firmware_get_is_fw_esm_xip_enabled (firmware) ? SPI_APP_EXTEND_INIT_DATA_START : SPI_APP_NORMAL_INIT_DATA_START);
-	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, ptr, fu_kinetic_dp_firmware_get_app_init_data_size (firmware),
+	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, ptr,
+							fu_kinetic_dp_firmware_get_app_init_data_size (firmware),
 							10000, 200, error)) {
-		g_prefix_error (error, "Sending App init data... failed: ");
+		g_prefix_error (error, "sending App init data failed: ");
 		return FALSE;
 	}
 
-	g_debug ("Sending App init data... done");
+	g_debug ("sending App init data... done");
 
 	if (fu_kinetic_dp_firmware_get_cmdb_block_size (firmware)) {
 		/* Send CMDB */
-		g_debug ("Sending CMDB... started");
+		g_debug ("sending CMDB... started");
 
 		ptr = (guint8 *)fw_data + SPI_CMDB_BLOCK_START;
-		if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, ptr, fu_kinetic_dp_firmware_get_cmdb_block_size (firmware),
+		if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection,
+								ptr,
+								fu_kinetic_dp_firmware_get_cmdb_block_size (firmware),
 								10000, 200, error)) {
-			g_prefix_error (error, "Sending CMDB... failed: ");
+			g_prefix_error (error, "sending CMDB failed: ");
 			return FALSE;
 		}
 
-		g_debug ("Sending CMDB... done");
+		g_debug ("sending CMDB... done");
 	}
 
 	/* Send Application Identifier */
 	ptr = (guint8 *)fw_data + SPI_APP_ID_DATA_START;
 	if (!fu_kinetic_dp_secure_aux_isp_send_payload (connection, ptr, STD_APP_ID_SIZE, 10000, 200, error)) {
-		g_prefix_error (error, "Sending App ID data... failed: ");
+		g_prefix_error (error, "sending App ID data failed: ");
 		return FALSE;
 	}
 
-	g_debug ("Sending App ID data... done");
-
+	g_debug ("sending App ID data... done");
 	return TRUE;
 }
 
@@ -618,32 +697,31 @@ fu_kinetic_dp_secure_aux_isp_install_fw_images (FuKineticDpConnection *connectio
 	guint16 wait_count = 1500;
 	guint16 progress_inc = FLASH_PROGRAM_COUNT / ((read_flash_prog_time * 1000) / WAIT_PROG_INTERVAL_MS);
 
-	g_debug ("Installing F/W payload... started");
-
-	if (!fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (connection, cmd_id, error))
-	{
-		g_prefix_error (error, "Sending DPCD command... failed: ");
+	if (!fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (connection, cmd_id, error)) {
+		g_prefix_error (error, "sending DPCD command failed: ");
 		return FALSE;
 	}
 
 	while (wait_count-- > 0) {
-		if (!fu_kinetic_dp_connection_read (connection, DPCD_ADDR_FLOAT_CMD_STATUS_REG, &status, 1, error)) {
-			g_prefix_error(error, "Reading DPCD_MCA_CMD_REG... failed: ");
+		if (!fu_kinetic_dp_connection_read (connection,
+						    DPCD_ADDR_FLOAT_CMD_STATUS_REG,
+						    &status, 1, error)) {
+			g_prefix_error(error, "reading DPCD_MCA_CMD_REG failed: ");
 			return FALSE;
 		}
 
-		if (status != (cmd_id | DPCD_KT_CONFIRMATION_BIT)) {	/* Target responded */
-			if (status == cmd_id) {				/* Confirmation bit is cleared */
+		/* target responded */
+		if (status != (cmd_id | DPCD_KT_CONFIRMATION_BIT)) {
+			/* confirmation bit is cleared */
+			if (status == cmd_id) {
 				isp_payload_procd_size += (isp_total_data_size - isp_procd_size);
-				g_debug ("Programming F/W payload... done");
-
+				g_debug ("programming F/W payload... done");
 				return TRUE;
 			} else {
-				g_set_error_literal(error,
-						    FWUPD_ERROR,
-						    FWUPD_ERROR_INTERNAL,
-						    "Installing images... failed");
-
+				g_set_error_literal (error,
+						     FWUPD_ERROR,
+						     FWUPD_ERROR_INTERNAL,
+						     "installing images failed");
 				return FALSE;
 			}
 		}
@@ -660,39 +738,43 @@ fu_kinetic_dp_secure_aux_isp_install_fw_images (FuKineticDpConnection *connectio
 	g_set_error_literal(error,
 			    FWUPD_ERROR,
 			    FWUPD_ERROR_INTERNAL,
-			    "Installing images... timed-out");
+			    "Installing images timed-out");
 
 	return FALSE;
 }
 
 static gboolean
-fu_kinetic_dp_secure_aux_isp_send_reset_command (FuKineticDpConnection *connection, GError **error)
+fu_kinetic_dp_secure_aux_isp_send_reset_command (FuKineticDpConnection *connection,
+						 GError **error)
 {
-	g_debug ("Resetting system...");
-
-	if (!fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (connection, KT_DPCD_CMD_RESET_SYSTEM, error)) {
-		g_prefix_error (error, "Resetting system... failed: ");
+	if (!fu_kinetic_dp_secure_aux_isp_write_kt_prop_cmd (connection,
+							     KT_DPCD_CMD_RESET_SYSTEM,
+							     error)) {
+		g_prefix_error (error, "resetting system failed: ");
 		return FALSE;
 	}
-
 	return TRUE;
 }
 
 static KtFlashBankIdx
-fu_kinetic_dp_secure_aux_isp_get_flash_bank_idx (FuKineticDpConnection *connection, GError **error)
+fu_kinetic_dp_secure_aux_isp_get_flash_bank_idx (FuKineticDpConnection *connection,
+						 GError **error)
 {
 	guint8 status;
-	guint8 prev_src_oui[DPCD_SIZE_IEEE_OUI] = {0};
+	guint8 prev_src_oui[DPCD_SIZE_IEEE_OUI] = { 0 };
 	guint8 res = BANK_NONE;
 
-	if (!fu_kinetic_dp_aux_dpcd_read_oui (connection, prev_src_oui, sizeof (prev_src_oui), error))
+	if (!fu_kinetic_dp_aux_dpcd_read_oui (connection,
+					      prev_src_oui, sizeof (prev_src_oui),
+					      error))
 		return BANK_NONE;
 
 	if (!fu_kinetic_dp_secure_aux_isp_write_mca_oui (connection, error))
 		return BANK_NONE;
 
-	if (fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (connection, KT_DPCD_CMD_GET_ACTIVE_FLASH_BANK, 100,
-							   20, &status, error) &&
+	if (fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (connection,
+							   KT_DPCD_CMD_GET_ACTIVE_FLASH_BANK,
+							   100, 20, &status, error) &&
 	    !fu_kinetic_dp_secure_aux_isp_read_param_reg (connection, &res, error))
 		res = BANK_NONE;
 
@@ -717,20 +799,31 @@ fu_kinetic_dp_secure_aux_isp_enable_aux_forward (FuKineticDpConnection *connecti
 		return FALSE;
 
 	cmd_id = (guint8)target_port;
-	if (!fu_kinetic_dp_connection_write (connection, DPCD_ADDR_FLOAT_PARAM_REG, &cmd_id, sizeof (cmd_id), error))
+	if (!fu_kinetic_dp_connection_write (connection,
+					     DPCD_ADDR_FLOAT_PARAM_REG,
+					     &cmd_id, sizeof (cmd_id),
+					     error))
 		return FALSE;
 
-	ret = fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (connection, KT_DPCD_CMD_ENABLE_AUX_FORWARD, 1000, 20, &status, error);
+	ret = fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (connection,
+							     KT_DPCD_CMD_ENABLE_AUX_FORWARD,
+							     1000, 20,
+							     &status,
+							     error);
 
 	/* Clear CMD_STATUS_REG */
 	cmd_id = KT_DPCD_CMD_STS_NONE;
-	fu_kinetic_dp_connection_write (connection, DPCD_ADDR_FLOAT_CMD_STATUS_REG, &cmd_id, sizeof (cmd_id), error);
+	fu_kinetic_dp_connection_write (connection,
+					DPCD_ADDR_FLOAT_CMD_STATUS_REG,
+					&cmd_id, sizeof (cmd_id),
+					error);
 
 	return ret;
 }
 
 gboolean
-fu_kinetic_dp_secure_aux_isp_disable_aux_forward (FuKineticDpConnection *connection, GError **error)
+fu_kinetic_dp_secure_aux_isp_disable_aux_forward (FuKineticDpConnection *connection,
+						  GError **error)
 {
 	gboolean ret;
 	guint8 status;
@@ -739,11 +832,18 @@ fu_kinetic_dp_secure_aux_isp_disable_aux_forward (FuKineticDpConnection *connect
 	if (!fu_kinetic_dp_secure_aux_isp_write_mca_oui (connection, error))
 		return FALSE;
 
-	ret = fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (connection, KT_DPCD_CMD_DISABLE_AUX_FORWARD, 1000, 20, &status, error);
+	ret = fu_kinetic_dp_secure_aux_isp_send_kt_prop_cmd (connection,
+							     KT_DPCD_CMD_DISABLE_AUX_FORWARD,
+							     1000, 20,
+							     &status,
+							     error);
 
-	/* Clear CMD_STATUS_REG */
+	/* clear CMD_STATUS_REG */
 	cmd_id = KT_DPCD_CMD_STS_NONE;
-	fu_kinetic_dp_connection_write (connection, DPCD_ADDR_FLOAT_CMD_STATUS_REG, &cmd_id, sizeof (cmd_id), error);
+	fu_kinetic_dp_connection_write (connection,
+					DPCD_ADDR_FLOAT_CMD_STATUS_REG,
+					&cmd_id, sizeof (cmd_id),
+					error);
 
 	return ret;
 }
@@ -753,9 +853,9 @@ fu_kinetic_dp_secure_aux_isp_get_device_info (FuKineticDpConnection *connection,
 					      KtDpDevInfo *dev_info,
 					      GError **error)
 {
-	guint8 dpcd_buf[16] = {0};
+	guint8 dpcd_buf[16] = { 0 };
 
-	/* Chip ID, FW work state, and branch ID string are known */
+	/* chip ID, FW work state, and branch ID string are known */
 
 	if (!fu_kinetic_dp_connection_read (connection, DPCD_ADDR_BRANCH_HW_REV, dpcd_buf,
 					     sizeof(dpcd_buf), error))
@@ -773,7 +873,7 @@ fu_kinetic_dp_secure_aux_isp_get_device_info (FuKineticDpConnection *connection,
 	}
 
 	dev_info->fw_info.boot_code_ver = 0;
-	/* <TODO> Add function to read CMDB information */
+	/* TODO: Add function to read CMDB information */
 	dev_info->fw_info.std_cmdb_ver = 0;
 	dev_info->fw_info.cmdb_rev = 0;
 
@@ -789,25 +889,25 @@ fu_kinetic_dp_secure_aux_isp_start_isp (FuKineticDpDevice *self,
 	FuKineticDpFirmware *firmware_self = FU_KINETIC_DP_FIRMWARE (firmware);
 	gboolean ret = FALSE;
 	gboolean is_app_mode = (KT_FW_STATE_RUN_APP == dev_info->fw_run_state) ? TRUE : FALSE;
-	g_autoptr (GBytes) isp_drv = NULL;
-	g_autoptr (GBytes) app = NULL;
 	const guint8 *payload_data;
 	gsize payload_len;
-	g_autoptr (FuDeviceLocker) locker = NULL;
-	g_autoptr (FuKineticDpConnection) connection = NULL;
-	g_autoptr (FuFirmware) img = NULL;
+	g_autoptr(FuDeviceLocker) locker = NULL;
+	g_autoptr(FuFirmware) img = NULL;
+	g_autoptr(FuKineticDpConnection) connection = NULL;
+	g_autoptr(GBytes) app = NULL;
+	g_autoptr(GBytes) isp_drv = NULL;
 
 	connection = fu_kinetic_dp_connection_new (fu_udev_device_get_fd (FU_UDEV_DEVICE (self)));
 
 	isp_procd_size = 0;
 
-	g_debug ("Start secure AUX-ISP [%s]...", fu_kinetic_dp_aux_isp_get_chip_id_str (dev_info->chip_id));
+	g_debug ("start secure AUX-ISP [%s]...", fu_kinetic_dp_aux_isp_get_chip_id_str (dev_info->chip_id));
 
-	/* Write MCA OUI */
+	/* write MCA OUI */
 	if (!fu_kinetic_dp_secure_aux_isp_write_mca_oui (connection, error))
 		goto SECURE_AUX_ISP_END;
 
-	/* Send ISP driver and execute it */
+	/* send ISP driver and execute it */
 	img = fu_firmware_get_image_by_idx (firmware, FU_KT_FW_IMG_IDX_ISP_DRV, error);
 	if (NULL == img)
 		return FALSE;
@@ -817,16 +917,22 @@ fu_kinetic_dp_secure_aux_isp_start_isp (FuKineticDpDevice *self,
 		return FALSE;
 
 	payload_data = g_bytes_get_data (isp_drv, &payload_len);
-	if (payload_len) {
-		if (!fu_kinetic_dp_secure_aux_isp_send_isp_drv (connection, is_app_mode, payload_data, payload_len, error))
+	if (payload_len > 0) {
+		if (!fu_kinetic_dp_secure_aux_isp_send_isp_drv (connection,
+								is_app_mode,
+								payload_data,
+								payload_len,
+								error))
 			goto SECURE_AUX_ISP_END;
 	}
 
-	/* Enable FW update mode */
-	if (!fu_kinetic_dp_secure_aux_isp_enable_fw_update_mode (firmware_self, connection, error))
+	/* enable FW update mode */
+	if (!fu_kinetic_dp_secure_aux_isp_enable_fw_update_mode (firmware_self,
+								 connection,
+								 error))
 		goto SECURE_AUX_ISP_END;
 
-	/* Send App FW image */
+	/* send App FW image */
 	img = fu_firmware_get_image_by_idx (firmware, FU_KT_FW_IMG_IDX_APP_FW, error);
 	if (NULL == img)
 		return FALSE;
@@ -836,14 +942,18 @@ fu_kinetic_dp_secure_aux_isp_start_isp (FuKineticDpDevice *self,
 		return FALSE;
 
 	payload_data = g_bytes_get_data (app, &payload_len);
-	if (!fu_kinetic_dp_secure_aux_isp_send_fw_payload (connection, firmware_self, payload_data, payload_len, error))
+	if (!fu_kinetic_dp_secure_aux_isp_send_fw_payload (connection,
+							   firmware_self,
+							   payload_data,
+							   payload_len,
+							   error))
 		goto SECURE_AUX_ISP_END;
 
-	/* Install FW images */
+	/* install FW images */
 	ret = fu_kinetic_dp_secure_aux_isp_install_fw_images (connection, error);
 
 SECURE_AUX_ISP_END:
-	/* Send reset command */
+	/* send reset command */
 	fu_kinetic_dp_secure_aux_isp_send_reset_command (connection, error);
 
 	return ret;
@@ -855,7 +965,10 @@ fu_kinetic_dp_secure_aux_isp_update_firmware (FuKineticDpDevice *self,
 					      const KtDpDevInfo *dev_info,
 					      GError **error)
 {
-	return fu_kinetic_dp_secure_aux_isp_start_isp (self, firmware, dev_info, error);
+	return fu_kinetic_dp_secure_aux_isp_start_isp (self,
+						       firmware,
+						       dev_info,
+						       error);
 }
 
 void

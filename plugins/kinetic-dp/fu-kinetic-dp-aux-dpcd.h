@@ -16,14 +16,14 @@
 #define DPCD_ADDR_BRANCH_HW_REV		0x00509
 #define DPCD_SIZE_BRANCH_HW_REV		1
 
-gboolean	fu_kinetic_dp_aux_dpcd_read_oui			(FuKineticDpConnection	*connection,
+gboolean	 fu_kinetic_dp_aux_dpcd_read_oui		(FuKineticDpConnection	*connection,
 								 guint8			*buf,
-								 guint32		buf_size,
+								 guint32		 buf_size,
 								 GError			**error);
-gboolean	fu_kinetic_dp_aux_dpcd_write_oui		(FuKineticDpConnection	*connection,
+gboolean	 fu_kinetic_dp_aux_dpcd_write_oui		(FuKineticDpConnection	*connection,
 								 const guint8		*buf,
 								 GError			**error);
-gboolean	fu_kinetic_dp_aux_dpcd_read_branch_id_str	(FuKineticDpConnection	*connection,
+gboolean	 fu_kinetic_dp_aux_dpcd_read_branch_id_str	(FuKineticDpConnection	*connection,
 								 guint8			*buf,
-								 guint32		buf_size,
+								 guint32		 buf_size,
 								 GError			**error);

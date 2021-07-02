@@ -17,14 +17,13 @@ G_DECLARE_FINAL_TYPE (FuKineticDpConnection, fu_kinetic_dp_connection, FU, KINET
 
 FuKineticDpConnection	*fu_kinetic_dp_connection_new	(gint			fd);
 
-
-gboolean		fu_kinetic_dp_connection_read	(FuKineticDpConnection	*self,
-							 guint32		offset,
+gboolean		 fu_kinetic_dp_connection_read	(FuKineticDpConnection	*self,
+							 guint32		 offset,
 							 guint8			*buf,
-							 guint32		length,
+							 guint32		 length,
 							 GError			**error);
-gboolean		fu_kinetic_dp_connection_write	(FuKineticDpConnection	*self,
-							 guint32		offset,
+gboolean		 fu_kinetic_dp_connection_write	(FuKineticDpConnection	*self,
+							 guint32		 offset,
 							 const guint8		*buf,
-							 guint32		length,
+							 guint32		 length,
 							 GError			**error);

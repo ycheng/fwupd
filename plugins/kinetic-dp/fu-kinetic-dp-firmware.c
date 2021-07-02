@@ -14,7 +14,7 @@
 struct _FuKineticDpFirmware {
 	FuFirmwareClass	parent_instance;
 
-	/* <TODO> Declare as private member */
+	/* TODO: declare as private member */
 	guint32		esm_payload_size;
 	guint32		arm_app_code_size;
 	guint32		app_init_data_size;
@@ -25,8 +25,8 @@ struct _FuKineticDpFirmware {
 
 G_DEFINE_TYPE (FuKineticDpFirmware, fu_kinetic_dp_firmware, FU_TYPE_FIRMWARE)
 
-#define HEADER_LEN_ISP_DRV_SIZE	4
-#define APP_ID_STR_LEN		4
+#define HEADER_LEN_ISP_DRV_SIZE		4
+#define APP_ID_STR_LEN			4
 
 typedef struct {
 	KtChipId	chip_id;
@@ -54,7 +54,7 @@ _get_valid_payload_size (const guint8 *payload_data, const guint32 data_size)
 {
 	guint32 i = 0;
 
-	payload_data += data_size - 1;  /* Start searching from the end of payload */
+	payload_data += data_size - 1;  /* start searching from the end of payload */
 	while ((*(payload_data - i) == 0xFF) && (i < data_size)) {
 		i++;
 	}
@@ -69,13 +69,11 @@ kt_dp_get_chip_id_from_fw_buf (const guint8 *fw_bin_buf,
 			       guint16 *fw_bin_flag)
 {
 	guint32 num = sizeof (kt_dp_app_sign_id_table) / sizeof (kt_dp_app_sign_id_table[0]);
-	guint32 i;
-
-	for (i = 0; i < num; i++) {
+	for (guint32 i = 0; i < num; i++) {
 		guint32 app_id_offset = kt_dp_app_sign_id_table[i].app_id_offset;
 
 		if ((app_id_offset + APP_ID_STR_LEN) < fw_bin_size) {
-			if (0 == memcmp (&fw_bin_buf[app_id_offset], kt_dp_app_sign_id_table[i].app_id_str, APP_ID_STR_LEN)) {
+			if (memcmp (&fw_bin_buf[app_id_offset], kt_dp_app_sign_id_table[i].app_id_str, APP_ID_STR_LEN) == 0) {
 				/* Found corresponding app ID */
 				*chip_id = kt_dp_app_sign_id_table[i].chip_id;
 				*fw_bin_flag = kt_dp_app_sign_id_table[i].fw_bin_flag;
@@ -116,22 +114,23 @@ sec_aux_isp_parse_app_fw (FuKineticDpFirmware *firmware,
 		firmware->is_fw_esm_xip_enabled = TRUE;
 	}
 
-#if 0	/* <TODO> Get FW info embedded in FW file */
+#if 0
+	/* TODO: get FW info embedded in FW file */
 	fw_app_id = (KtJaguarAppId *)(fw_bin_buf + SPI_APP_ID_DATA_START);
 
-	/* Get Standard F/W version */
+	/* get Standard F/W version */
 	fw_file_info->fw_info.std_fw_ver = (guint32)(fw_app_id->fw_major_ver_num << 16);
 	fw_file_info->fw_info.std_fw_ver += (guint32)(fw_app_id->fw_minor_ver_num << 8);
 	fw_file_info->fw_info.std_fw_ver += fw_app_id->fw_rev_num;
 
-	/* Get Customer Project ID */
+	/* get Customer Project ID */
 	fw_file_info->fw_info.customer_project_id = fw_bin_buf[CUSTOMER_PROJ_ID_OFFSET];
 
-	/* Get Customer F/W Version */
+	/* get Customer F/W Version */
 	memcpy (&fw_file_info->fw_info.customer_fw_ver, &fw_bin_buf[CUSTOMER_FW_VER_OFFSET], CUSTOMER_FW_VER_SIZE);
 #endif
 
-	/* Get each block size */
+	/* get each block size */
 	firmware->esm_payload_size = _get_valid_payload_size (&fw_bin_buf[SPI_ESM_PAYLOAD_START], ESM_PAYLOAD_BLOCK_SIZE);
 	firmware->arm_app_code_size = _get_valid_payload_size (&fw_bin_buf[SPI_APP_PAYLOAD_START], app_code_block_size);
 	firmware->app_init_data_size = _get_valid_payload_size (&fw_bin_buf[app_init_data_start_addr], APP_INIT_DATA_BLOCK_SIZE);
@@ -187,26 +186,26 @@ fu_kinetic_dp_firmware_parse (FuFirmware *firmware,
 	const guint8 *buf;
 	gsize bufsz;
 	guint32 isp_drv_payload_size = 0, app_fw_payload_size = 0;
-	g_autoptr (GBytes) isp_drv_payload = NULL;
-	g_autoptr (GBytes) app_fw_payload = NULL;
+	g_autoptr(GBytes) isp_drv_payload = NULL;
+	g_autoptr(GBytes) app_fw_payload = NULL;
 	g_autoptr  (FuFirmware) isp_drv_img = NULL;
-	g_autoptr (FuFirmware) app_fw_img = NULL;
-	KtChipId chip_id = KT_CHIP_NONE;	/* <TODO> store in class private data */
-	guint16 fw_bin_flag = 0;		/* <TODO> store in class private data */
+	g_autoptr(FuFirmware) app_fw_img = NULL;
+	KtChipId chip_id = KT_CHIP_NONE;	/* TODO: store in class private data */
+	guint16 fw_bin_flag = 0;		/* TODO: store in class private data */
 
 	/* Parse firmware according to Kinetic's FW image format
 	 * FW binary = 4 bytes header(Little-Endian) + ISP driver + app FW
 	 * 4 bytes: size of ISP driver
 	 */
 	buf = g_bytes_get_data (fw, &bufsz);
-	if (!fu_common_read_uint32_safe(buf, bufsz, 0,
-					&isp_drv_payload_size, G_LITTLE_ENDIAN, error)) {
+	if (!fu_common_read_uint32_safe(buf, bufsz, 0, &isp_drv_payload_size,
+					G_LITTLE_ENDIAN, error)) {
 		return FALSE;
 	}
 	g_debug ("ISP driver payload size: %u bytes", isp_drv_payload_size);
 
 	app_fw_payload_size = g_bytes_get_size (fw) - HEADER_LEN_ISP_DRV_SIZE - isp_drv_payload_size;
-	g_debug ("App FW payload size: %u bytes", app_fw_payload_size);
+	g_debug ("app FW payload size: %u bytes", app_fw_payload_size);
 
 	/* Add ISP driver as a new image into firmware */
 	isp_drv_payload = g_bytes_new_from_bytes (fw, HEADER_LEN_ISP_DRV_SIZE, isp_drv_payload_size);
@@ -215,27 +214,25 @@ fu_kinetic_dp_firmware_parse (FuFirmware *firmware,
 
 	fu_firmware_add_image (firmware, isp_drv_img);
 
-	/* Add App FW as a new image into firmware */
+	/* add App FW as a new image into firmware */
 	app_fw_payload = g_bytes_new_from_bytes (fw, HEADER_LEN_ISP_DRV_SIZE + isp_drv_payload_size, app_fw_payload_size);
 	buf = g_bytes_get_data (app_fw_payload, &bufsz);
 	if (!kt_dp_get_chip_id_from_fw_buf (buf, bufsz, &chip_id, &fw_bin_flag)) {
 		g_set_error_literal(error,
 				    FWUPD_ERROR,
 				    FWUPD_ERROR_INTERNAL,
-				    "No valid chip ID is found in the firmware");
+				    "no valid chip ID is found in the firmware");
 		return FALSE;
 	}
 
 	if (!sec_aux_isp_parse_app_fw (fw_self, buf, bufsz, chip_id, fw_bin_flag, error)) {
-		g_prefix_error (error, "Failed to parse FW info from firmware file: ");
+		g_prefix_error (error, "failed to parse FW info from firmware file: ");
 		return FALSE;
 	}
 
 	app_fw_img = fu_firmware_new_from_bytes (app_fw_payload);
 	fu_firmware_set_idx (app_fw_img, FU_KT_FW_IMG_IDX_APP_FW);
-
 	fu_firmware_add_image (firmware, app_fw_img);
-
 	return TRUE;
 }
 
